@@ -18,6 +18,8 @@
 #include <unordered_map>   
 #include <pthread.h>  
 #include <set>
+#include <hiredis/hiredis.h>
+#include <fstream>
 using namespace std;
 
 #endif

@@ -104,6 +104,26 @@ void server::HandleRequest(int conn,string str,tuple<bool,string,string,int,int>
 	MYSQL *ret=mysql_real_connect(con,"127.0.0.1","root","","ChatProject",0,NULL,CLIENT_MULTI_STATEMENTS);
 	if(ret == NULL)
 		cout<<"连接数据库失败"<<endl;
+	//连接redis数据库
+	redisContext *redis_target = redisConnect("127.0.0.1",6379);
+	if(redis_target->err){
+		redisFree(redis_target);
+		cout<<"连接redis失败"<<endl;
+	}
+	if(str.find("cookie:")!=str.npos){
+		string cookie=str.substr(7);
+		string redis_str="hget "+cookie+" name";
+		redisReply *r = (redisReply*)redisCommand(redis_target,
+		redis_str.c_str());
+		string send_res;
+		if(r->str){
+			cout<<"查询redis结果:"<<r->str<<endl;
+			send_res=r->str;
+		}
+		else 
+			send_res="NULL";
+		send(conn,send_res.c_str(),send_res.length()+1,0);
+	}
     //注册
     if(str.find("name:")!=str.npos){
         int p1=str.find("name:"),p2=str.find("pass:");
@@ -144,6 +164,21 @@ void server::HandleRequest(int conn,string str,tuple<bool,string,string,int,int>
                 pthread_mutex_lock(&name_sock_mutx); //上锁
                 name_sock_map[login_name]=conn;//记录下名字和文件描述符的对应关系
                 pthread_mutex_unlock(&name_sock_mutx); //解锁
+				srand(time(NULL));
+				for(int i=0;i<10;i++){
+					int type=rand()%3;
+					if(type==0)
+						str1+='0'+rand()%9;
+					else if(type==1)
+						str1+='a'+rand()%26;
+					else if(type==2)
+						str1+='A'+rand()%26;
+				}
+				string redis_str="hset "+str1.substr(2)+" name "+login_name;
+				redisReply *r = (redisReply*)redisCommand(redis_target,redis_str.c_str());
+				redis_str="expire "+str1.substr(2)+" 300";
+				r=(redisReply*)redisCommand(redis_target,redis_str.c_str());
+				cout<<"随机生成的sessionid为："<<str1.substr(2)<<endl;
                 send(conn,str1.c_str(),str1.length()+1,0);
             }
             //密码错误
