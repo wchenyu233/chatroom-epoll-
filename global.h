@@ -20,6 +20,10 @@
 #include <set>
 #include <hiredis/hiredis.h>
 #include <fstream>
+#include<sys/epoll.h>
+#include<boost/bind.hpp>
+#include<boost/asio.hpp>
+#include<errno.h>
 using namespace std;
 
 #endif

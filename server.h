@@ -14,11 +14,13 @@ class server{
         static pthread_mutex_t name_sock_mutx;//互斥锁，锁住需要修改name_sock_map的临界区
 		static unordered_map<int,set<int>> group_map;
 		static pthread_mutex_t group_mutx;
+		static pthread_mutex_t from_mutex;
+		static void setnonblocking(int conn);
     public:
         server(int port,string ip);
         ~server();
         void run();
-        static void RecvMsg(int conn);
-        static void HandleRequest(int conn,string str,tuple<bool,string,string,int,int> &info);
+        static void RecvMsg(int epollfd,int conn);
+        static void HandleRequest(int epfd,int conn,string str,tuple<bool,string,string,int,int> &info);
 };
 #endif
